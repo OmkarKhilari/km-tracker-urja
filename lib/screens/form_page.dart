@@ -64,6 +64,7 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _openingKmController = TextEditingController();
   final TextEditingController _closingKmController = TextEditingController();
   final TextEditingController _differenceController = TextEditingController();
+  double kmTravelled = 0;
 
   List<String>? _names;
   String? _selectedShift = 'Day';
@@ -244,7 +245,7 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   if (_formKey.currentState!.saveAndValidate()) {
                     print(_formKey.currentState!.value);
-                    // Here you would typically upload the form values and selected files to your backend
+                    _calculateTotalIncome();
                   }
                 },
                 child: Text('Submit'),
@@ -253,6 +254,11 @@ class _HomePageState extends State<HomePage> {
                   foregroundColor: Colors.yellow,
                 ),
               ),
+               SizedBox(height: 20),
+              Text(
+                'Today\'s Allowance: \$${_todaysAllowance.toStringAsFixed(2)}',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
         ),
@@ -260,10 +266,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  double _todaysAllowance = 0.0;
+
+
   void _calculateDifference() {
     final openingKm = double.tryParse(_openingKmController.text) ?? 0.0;
     final closingKm = double.tryParse(_closingKmController.text) ?? 0.0;
     final difference = closingKm - openingKm;
+    kmTravelled = difference;
     _differenceController.text = difference.toString();
   }
 
@@ -280,6 +290,23 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
+
+  void _calculateTotalIncome() {
+    final name = _formKey.currentState?.fields['name']?.value;
+    final position = _formKey.currentState?.fields['position']?.value;
+    final shift = _selectedShift ?? 'Day';
+    final isSunday = DateTime.now().weekday == DateTime.sunday;
+    
+    if (name != null && position != null) {
+      final employee = widget.employeeData.firstWhere(
+          (data) => data.name == name && data.designation == position);
+      final dailyAllowance = employee.calculateDailyAllowance(shift, isSunday, kmTravelled);
+      setState(() {
+        _todaysAllowance = dailyAllowance;
+      });
+      print('Total income for $name: \$${dailyAllowance.toStringAsFixed(2)}');
+    }
+  }
 }
 
 class EmployeeData {
@@ -293,10 +320,9 @@ class EmployeeData {
     required this.branch,
   });
 
-  double calculateDailyAllowance(String shift, bool isSunday) {
-    double dailyAllowance = 3.2; // Base rate per km
+  double calculateDailyAllowance(String shift, bool isSunday, double kmTravelled) { 
+    double dailyAllowance = 3.2 * kmTravelled; 
 
-    // Adjust allowance based on position and shift
     switch (designation) {
       case 'BM':
         dailyAllowance += shift == 'Day' ? 90 : 120;
@@ -309,7 +335,7 @@ class EmployeeData {
         break;
       case 'WS':
         dailyAllowance += shift == 'Day' ? 100 : 60;
-        if (isSunday) dailyAllowance += 100; // Additional for Sunday
+        if (isSunday) dailyAllowance += 100;
         break;
       default:
         break;
