@@ -66,6 +66,7 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _differenceController = TextEditingController();
 
   List<String>? _names;
+  String? _selectedShift = 'Day';
 
   @override
   Widget build(BuildContext context) {
@@ -193,6 +194,22 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               SizedBox(height: 20),
+              DropdownButton<String>(
+                value: _selectedShift,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedShift = newValue;
+                  });
+                },
+                items: <String>['Day', 'Night']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
                   FilePickerResult? result =
@@ -275,6 +292,31 @@ class EmployeeData {
     required this.designation,
     required this.branch,
   });
+
+  double calculateDailyAllowance(String shift, bool isSunday) {
+    double dailyAllowance = 3.2; // Base rate per km
+
+    // Adjust allowance based on position and shift
+    switch (designation) {
+      case 'BM':
+        dailyAllowance += shift == 'Day' ? 90 : 120;
+        break;
+      case 'ABM':
+        dailyAllowance += shift == 'Day' ? 75 : 120;
+        break;
+      case 'LS':
+        dailyAllowance += shift == 'Day' ? 60 : 120;
+        break;
+      case 'WS':
+        dailyAllowance += shift == 'Day' ? 100 : 60;
+        if (isSunday) dailyAllowance += 100; // Additional for Sunday
+        break;
+      default:
+        break;
+    }
+
+    return dailyAllowance;
+  }
 }
 
 final List<List<String>> mancharData = [
