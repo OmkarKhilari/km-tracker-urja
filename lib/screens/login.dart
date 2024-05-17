@@ -20,7 +20,7 @@ class LoginPage extends StatelessWidget {
         final UserCredential userCredential = await _auth.signInWithCredential(credential);
         final User? user = userCredential.user;
 
-        if (user != null && user.email!.endsWith('@companydomain.com')) {
+        if (user != null && user.email!.endsWith('@urjafoods.net')) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Welcome HR: ${user.displayName}')),
           );
