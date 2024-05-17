@@ -73,7 +73,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("KM Tracker"),
+        title: const Text("KM Tracker"),
       ),
       body: FormBuilder(
         key: _formKey,
@@ -86,9 +86,9 @@ class _HomePageState extends State<HomePage> {
                 decoration: InputDecoration(
                   labelText: 'Select Branch',
                   hintText: 'Select Branch',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
-                    icon: Icon(Icons.clear),
+                    icon: const Icon(Icons.clear),
                     onPressed: () {
                       _formKey.currentState!.fields['branch']!.reset();
                       setState(() {
@@ -111,15 +111,15 @@ class _HomePageState extends State<HomePage> {
                         ))
                     .toList(),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               FormBuilderDropdown(
                 name: 'position',
                 decoration: InputDecoration(
                   labelText: 'Select Position',
                   hintText: 'Select Position',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
-                    icon: Icon(Icons.clear),
+                    icon: const Icon(Icons.clear),
                     onPressed: () {
                       _formKey.currentState!.fields['position']!.reset();
                       setState(() {
@@ -139,10 +139,10 @@ class _HomePageState extends State<HomePage> {
                   _updateNames();
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               FormBuilderDropdown(
                 name: 'name',
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Name',
                   border: OutlineInputBorder(),
                 ),
@@ -152,19 +152,19 @@ class _HomePageState extends State<HomePage> {
                     )).toList() ?? [],
                 enabled: _names != null,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               FormBuilderTextField(
                 name: 'phone',
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Phone',
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _openingKmController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Opening KM',
                   border: OutlineInputBorder(),
                 ),
@@ -173,10 +173,10 @@ class _HomePageState extends State<HomePage> {
                   _calculateDifference();
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _closingKmController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Closing KM',
                   border: OutlineInputBorder(),
                 ),
@@ -185,16 +185,16 @@ class _HomePageState extends State<HomePage> {
                   _calculateDifference();
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _differenceController,
                 readOnly: true,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'KM Travelled Today',
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               DropdownButton<String>(
                 value: _selectedShift,
                 onChanged: (String? newValue) {
@@ -210,7 +210,7 @@ class _HomePageState extends State<HomePage> {
                   );
                 }).toList(),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
                   FilePickerResult? result =
@@ -221,11 +221,11 @@ class _HomePageState extends State<HomePage> {
                     });
                   }
                 },
-                child: Text('Opening KM PROOF (Select File)'),
+                child: const Text('Opening KM PROOF (Select File)'),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(_openingKmFile?.name ?? 'No file selected'),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
                   FilePickerResult? result =
@@ -236,11 +236,11 @@ class _HomePageState extends State<HomePage> {
                     });
                   }
                 },
-                child: Text('Closing KM PROOF (Select File)'),
+                child: const Text('Closing KM PROOF (Select File)'),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(_closingKmFile?.name ?? 'No file selected'),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.saveAndValidate()) {
@@ -248,16 +248,16 @@ class _HomePageState extends State<HomePage> {
                     _calculateTotalIncome();
                   }
                 },
-                child: Text('Submit'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.yellow,
                 ),
+                child: const Text('Submit'),
               ),
-               SizedBox(height: 20),
+               const SizedBox(height: 20),
               Text(
                 'Today\'s Allowance: \$${_todaysAllowance.toStringAsFixed(2)}',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ],
           ),
