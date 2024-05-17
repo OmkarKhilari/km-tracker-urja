@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "523231893916",
+    "project_id": "km-tracker-urja",
+    "storage_bucket": "km-tracker-urja.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:523231893916:android:1d163d79ed4c2eebc9d059",
+        "android_client_info": {
+          "package_name": "com.example.km_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDO1JFf8Ze1d2TBFJs-56547bHOCOr_-ag"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
