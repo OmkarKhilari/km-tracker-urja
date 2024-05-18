@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:km_tracker/screens/form_page.dart';
+import 'package:km_tracker/screens/edit_page.dart'; // Import the new EditPage
 
 class LoginPage extends StatelessWidget {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
@@ -20,11 +21,15 @@ class LoginPage extends StatelessWidget {
         final UserCredential userCredential = await _auth.signInWithCredential(credential);
         final User? user = userCredential.user;
 
-        if (user != null && user.email!.endsWith('@urjafoods.net')) {
+        if (user != null && user.email!.endsWith('@gmail.com')) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Welcome: ${user.displayName}')),
           );
-          // Navigate to HR dashboard or perform other actions
+          // Navigate to EditPage for HR
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => EditPage()),
+          );
         } else {
           await _auth.signOut();
           showDialog(
