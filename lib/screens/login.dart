@@ -22,7 +22,7 @@ class LoginPage extends StatelessWidget {
 
         if (user != null && user.email!.endsWith('@urjafoods.net')) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Welcome HR: ${user.displayName}')),
+            SnackBar(content: Text('Welcome: ${user.displayName}')),
           );
           // Navigate to HR dashboard or perform other actions
         } else {
