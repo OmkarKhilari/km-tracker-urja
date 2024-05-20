@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:km_tracker/database/upload_initial_data.dart';
 import 'package:km_tracker/screens/form_page.dart';
 import 'package:km_tracker/screens/login.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -18,6 +19,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  // print('started');
+  // await uploadInitialData();
+  // print('done');
   runApp(const MyApp());
 }
 
@@ -43,3 +47,5 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
