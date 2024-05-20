@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:km_tracker/database/people_data.dart';
+
 
 class FormPage extends StatefulWidget {
   @override
@@ -9,30 +11,27 @@ class FormPage extends StatefulWidget {
 }
 
 class _FormPageState extends State<FormPage> {
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
   List<EmployeeData> _employeeData = [];
 
   @override
   void initState() {
     super.initState();
-    _employeeData = [
-      ...parseEmployeeData(branch: 'Manchar', data: mancharData),
-      ...parseEmployeeData(branch: 'Shirur', data: shirurData),
-      ...parseEmployeeData(branch: 'Nirgudsar', data: nirgudsarData),
-      ...parseEmployeeData(branch: 'Urulikanchan', data: urulikanchanData),
-      ...parseEmployeeData(branch: 'Sangamner', data: sangamnerData),
-      ...parseEmployeeData(branch: 'Alephata', data: alephataData),
-    ];
+    _fetchEmployeeData();
   }
 
-  List<EmployeeData> parseEmployeeData(
-      {required String branch, required List<List<String>> data}) {
-    return data
-        .map((entry) => EmployeeData(
-              name: entry[1],
-              designation: entry[2],
-              branch: branch,
-            ))
-        .toList();
+  Future<void> _fetchEmployeeData() async {
+    QuerySnapshot snapshot = await firestore.collection('employees').get();
+    List<EmployeeData> data = snapshot.docs.map((doc) {
+      return EmployeeData(
+        name: doc['name'],
+        designation: doc['designation'],
+        branch: doc['branch'],
+      );
+    }).toList();
+    setState(() {
+      _employeeData = data;
+    });
   }
 
   @override
@@ -203,7 +202,7 @@ class _HomePageState extends State<HomePage> {
                     _selectedShift = newValue;
                   });
                 },
-                items: <String>['Day', 'Night']
+                items: ['Day', 'Night']
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -212,53 +211,20 @@ class _HomePageState extends State<HomePage> {
                 }).toList(),
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  FilePickerResult? result =
-                      await FilePicker.platform.pickFiles();
-                  if (result != null) {
-                    setState(() {
-                      _openingKmFile = result.files.first;
-                    });
-                  }
-                },
-                child: const Text('Opening KM PROOF (Select File)'),
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Area Visited',
+                  border: OutlineInputBorder(),
+                ),
               ),
-              const SizedBox(height: 10),
-              Text(_openingKmFile?.name ?? 'No file selected'),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  FilePickerResult? result =
-                      await FilePicker.platform.pickFiles();
-                  if (result != null) {
-                    setState(() {
-                      _closingKmFile = result.files.first;
-                    });
-                  }
-                },
-                child: const Text('Closing KM PROOF (Select File)'),
-              ),
-              const SizedBox(height: 10),
-              Text(_closingKmFile?.name ?? 'No file selected'),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  if (_formKey.currentState!.saveAndValidate()) {
-                    print(_formKey.currentState!.value);
-                    _calculateTotalIncome();
+                  if (_formKey.currentState!.validate()) {
+                    // Handle form submission
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.yellow,
-                ),
                 child: const Text('Submit'),
-              ),
-               const SizedBox(height: 20),
-              Text(
-                'Today\'s Allowance: \$${_todaysAllowance.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -267,46 +233,33 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  double _todaysAllowance = 0.0;
-
-
   void _calculateDifference() {
     final openingKm = double.tryParse(_openingKmController.text) ?? 0.0;
     final closingKm = double.tryParse(_closingKmController.text) ?? 0.0;
-    final difference = closingKm - openingKm;
-    kmTravelled = difference;
-    _differenceController.text = difference.toString();
+    setState(() {
+      kmTravelled = closingKm - openingKm;
+      _differenceController.text = kmTravelled.toStringAsFixed(2);
+    });
   }
 
   void _updateNames() {
     final branch = _formKey.currentState?.fields['branch']?.value;
     final position = _formKey.currentState?.fields['position']?.value;
-    if (branch != null && position != null) {
-      setState(() {
-        _names = widget.employeeData
-            .where((data) =>
-                data.branch == branch && data.designation == position)
-            .map((data) => data.name)
-            .toList();
-      });
-    }
-  }
 
-  void _calculateTotalIncome() {
-    final name = _formKey.currentState?.fields['name']?.value;
-    final position = _formKey.currentState?.fields['position']?.value;
-    final shift = _selectedShift ?? 'Day';
-    final isSunday = DateTime.now().weekday == DateTime.sunday;
-    
-    if (name != null && position != null) {
-      final employee = widget.employeeData.firstWhere(
-          (data) => data.name == name && data.designation == position);
-      final dailyAllowance = employee.calculateDailyAllowance(shift, isSunday, kmTravelled);
+    if (branch == null || position == null) {
       setState(() {
-        _todaysAllowance = dailyAllowance;
+        _names = null;
       });
-      print('Total income for $name: \$${dailyAllowance.toStringAsFixed(2)}');
+      return;
     }
+
+    setState(() {
+      _names = widget.employeeData
+          .where((employee) =>
+              employee.branch == branch && employee.designation == position)
+          .map((employee) => employee.name)
+          .toList();
+    });
   }
 }
 
@@ -320,28 +273,4 @@ class EmployeeData {
     required this.designation,
     required this.branch,
   });
-
-  double calculateDailyAllowance(String shift, bool isSunday, double kmTravelled) { 
-    double dailyAllowance = 3.2 * kmTravelled; 
-
-    switch (designation) {
-      case 'BM':
-        dailyAllowance += shift == 'Day' ? 90 : 120;
-        break;
-      case 'ABM':
-        dailyAllowance += shift == 'Day' ? 75 : 120;
-        break;
-      case 'LS':
-        dailyAllowance += shift == 'Day' ? 60 : 120;
-        break;
-      case 'WS':
-        dailyAllowance += shift == 'Day' ? 100 : 60;
-        if (isSunday) dailyAllowance += 100;
-        break;
-      default:
-        break;
-    }
-
-    return dailyAllowance;
-  }
 }

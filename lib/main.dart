@@ -19,9 +19,12 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Uncomment the lines below to upload initial data to Firestore
   // print('started');
   // await uploadInitialData();
   // print('done');
+
   runApp(const MyApp());
 }
 
@@ -47,5 +50,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-
