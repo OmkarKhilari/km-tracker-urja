@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:file_picker/file_picker.dart';
 
-
 class FormPage extends StatefulWidget {
   @override
   State<FormPage> createState() => _FormPageState();
@@ -68,6 +67,7 @@ class _HomePageState extends State<HomePage> {
 
   List<String>? _names;
   String? _selectedShift = 'Day';
+  double _todaysAllowance = 0.0;
 
   @override
   Widget build(BuildContext context) {
@@ -211,20 +211,53 @@ class _HomePageState extends State<HomePage> {
                 }).toList(),
               ),
               const SizedBox(height: 20),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Area Visited',
-                  border: OutlineInputBorder(),
-                ),
+              ElevatedButton(
+                onPressed: () async {
+                  FilePickerResult? result =
+                      await FilePicker.platform.pickFiles();
+                  if (result != null) {
+                    setState(() {
+                      _openingKmFile = result.files.first;
+                    });
+                  }
+                },
+                child: const Text('Opening KM PROOF (Select File)'),
               ),
+              const SizedBox(height: 10),
+              Text(_openingKmFile?.name ?? 'No file selected'),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  FilePickerResult? result =
+                      await FilePicker.platform.pickFiles();
+                  if (result != null) {
+                    setState(() {
+                      _closingKmFile = result.files.first;
+                    });
+                  }
+                },
+                child: const Text('Closing KM PROOF (Select File)'),
+              ),
+              const SizedBox(height: 10),
+              Text(_closingKmFile?.name ?? 'No file selected'),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    // Handle form submission
+                  if (_formKey.currentState!.saveAndValidate()) {
+                    print(_formKey.currentState!.value);
+                    _calculateTotalIncome();
                   }
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.yellow,
+                ),
                 child: const Text('Submit'),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Today\'s Allowance: \$${_todaysAllowance.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -260,6 +293,28 @@ class _HomePageState extends State<HomePage> {
           .map((employee) => employee.name)
           .toList();
     });
+  }
+
+  void _calculateTotalIncome() {
+    final name = _formKey.currentState?.fields['name']?.value;
+    final position = _formKey.currentState?.fields['position']?.value;
+    final shift = _selectedShift ?? 'Day';
+    final isSunday = DateTime.now().weekday == DateTime.sunday;
+
+    if (name != null && position != null) {
+      final employee = widget.employeeData.firstWhere(
+          (employee) => employee.name == name && employee.designation == position,
+          orElse: () => EmployeeData(name: '', designation: '', branch: ''));
+
+      final baseRate = 10.0;
+      final shiftMultiplier = shift == 'Day' ? 1.0 : 1.5;
+      final sundayBonus = isSunday ? 1.5 : 1.0;
+      final perKmRate = baseRate * shiftMultiplier * sundayBonus;
+
+      setState(() {
+        _todaysAllowance = kmTravelled * perKmRate;
+      });
+    }
   }
 }
 
