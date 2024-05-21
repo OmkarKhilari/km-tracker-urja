@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:firebase_core/firebase_core.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
 
 class FormPage extends StatefulWidget {
   const FormPage({super.key});
@@ -148,10 +150,13 @@ class _HomePageState extends State<HomePage> {
                   labelText: 'Name',
                   border: OutlineInputBorder(),
                 ),
-                items: _names?.map((name) => DropdownMenuItem(
-                      value: name,
-                      child: Text(name),
-                    )).toList() ?? [],
+                items: _names
+                        ?.map((name) => DropdownMenuItem(
+                              value: name,
+                              child: Text(name),
+                            ))
+                        .toList() ??
+                    [],
                 enabled: _names != null,
               ),
               const SizedBox(height: 20),
@@ -248,6 +253,7 @@ class _HomePageState extends State<HomePage> {
                   if (_formKey.currentState!.saveAndValidate()) {
                     print(_formKey.currentState!.value);
                     _calculateTotalIncome();
+                    writeData(_formKey.currentState!.value);
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -259,7 +265,8 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 20),
               Text(
                 'Today\'s Allowance: \$${_todaysAllowance.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -271,30 +278,52 @@ class _HomePageState extends State<HomePage> {
   void _calculateDifference() {
     final openingKm = double.tryParse(_openingKmController.text) ?? 0.0;
     final closingKm = double.tryParse(_closingKmController.text) ?? 0.0;
-    setState(() {
-      kmTravelled = closingKm - openingKm;
-      _differenceController.text = kmTravelled.toStringAsFixed(2);
-    });
+    final difference = closingKm - openingKm;
+    kmTravelled = difference;
+    _differenceController.text = difference.toString();
   }
 
   void _updateNames() {
     final branch = _formKey.currentState?.fields['branch']?.value;
     final position = _formKey.currentState?.fields['position']?.value;
-
-    if (branch == null || position == null) {
+    if (branch != null && position != null) {
       setState(() {
-        _names = null;
+        _names = widget.employeeData
+            .where((data) =>
+                data.branch == branch && data.designation == position)
+            .map((data) => data.name)
+            .toList();
       });
-      return;
     }
+  }
 
-    setState(() {
-      _names = widget.employeeData
-          .where((employee) =>
-              employee.branch == branch && employee.designation == position)
-          .map((employee) => employee.name)
-          .toList();
-    });
+  Future<void> writeData(Map<String, dynamic> formData) async {
+    try {
+      // Convert form data to JSON
+      String jsonData = jsonEncode(formData);
+
+      // Define the API endpoint URL
+      String apiUrl = 'http://127.0.0.1:3000/write/';
+
+      // Make a POST request to the API endpoint
+      http.Response response = await
+      http.post(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonData,
+      );
+
+      // Check if the request was successful
+      if (response.statusCode == 200) {
+        print('Data written successfully');
+      } else {
+        print('Failed to write data: ${response.body}');
+      }
+    } catch (e) {
+      print('Error occurred while writing data: $e');
+    }
   }
 
   void _calculateTotalIncome() {
@@ -305,17 +334,12 @@ class _HomePageState extends State<HomePage> {
 
     if (name != null && position != null) {
       final employee = widget.employeeData.firstWhere(
-          (employee) => employee.name == name && employee.designation == position,
-          orElse: () => EmployeeData(name: '', designation: '', branch: ''));
-
-      final baseRate = 10.0;
-      final shiftMultiplier = shift == 'Day' ? 1.0 : 1.5;
-      final sundayBonus = isSunday ? 1.5 : 1.0;
-      final perKmRate = baseRate * shiftMultiplier * sundayBonus;
-
+          (data) => data.name == name && data.designation == position);
+      final dailyAllowance = employee.calculateDailyAllowance(shift, isSunday, kmTravelled); // Pass kmTravelled
       setState(() {
-        _todaysAllowance = kmTravelled * perKmRate;
+        _todaysAllowance = dailyAllowance;
       });
+      print('Total income for $name: \$${dailyAllowance.toStringAsFixed(2)}');
     }
   }
 }
@@ -330,4 +354,29 @@ class EmployeeData {
     required this.designation,
     required this.branch,
   });
+
+  double calculateDailyAllowance(String shift, bool isSunday, double kmTravelled) {
+    double dailyAllowance = 3.2 * kmTravelled;
+
+    switch (designation) {
+      case 'BM':
+        dailyAllowance += shift == 'Day' ? 90 : 120;
+        break;
+      case 'ABM':
+        dailyAllowance += shift == 'Day' ? 75 : 120;
+        break;
+      case 'LS':
+        dailyAllowance += shift == 'Day' ? 60 : 120;
+        break;
+      case 'WS':
+        dailyAllowance += shift == 'Day' ? 100 : 60;
+        if (isSunday) dailyAllowance += 100;
+        break;
+      default:
+        break;
+    }
+
+    return dailyAllowance;
+  }
 }
+
