@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:km_tracker/widgets/loading_screen.dart';
 
 class DeletePersonPage extends StatefulWidget {
+  const DeletePersonPage({super.key});
+
   @override
   _DeletePersonPageState createState() => _DeletePersonPageState();
 }
@@ -22,21 +24,21 @@ class _DeletePersonPageState extends State<DeletePersonPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Delete'),
-          content: Text('Do you really want to delete this person?'),
+          title: const Text('Confirm Delete'),
+          content: const Text('Do you really want to delete this person?'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop(); 
               },
               child: Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
                 _deletePerson(documentId);
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop(); 
               },
-              child: Text('Delete'),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -53,7 +55,7 @@ class _DeletePersonPageState extends State<DeletePersonPage> {
           isLoading: isLoading,
           child: Scaffold(
             appBar: AppBar(
-              title: Text('Delete Person'),
+              title: const Text('Delete Person'),
             ),
             body: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -61,7 +63,7 @@ class _DeletePersonPageState extends State<DeletePersonPage> {
                 children: [
                   DropdownButtonFormField<String>(
                     value: _selectedBranch,
-                    hint: Text('Select Branch'),
+                    hint: const Text('Select Branch'),
                     items: [
                       'Manchar',
                       'Shirur',
@@ -86,10 +88,13 @@ class _DeletePersonPageState extends State<DeletePersonPage> {
                       }
                       return null;
                     },
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder()
+                    ),
                   ),
                   Expanded(
                     child: _selectedBranch == null
-                        ? Center(child: Text('Select a branch to see the people'))
+                        ? const Center(child: Text('Select a branch to see the people'))
                         : StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('employees')
@@ -97,7 +102,7 @@ class _DeletePersonPageState extends State<DeletePersonPage> {
                                 .snapshots(),
                             builder: (context, snapshot) {
                               if (!snapshot.hasData) {
-                                return Center(child: CircularProgressIndicator());
+                                return const Center(child: CircularProgressIndicator());
                               }
 
                               final people = snapshot.data!.docs;
@@ -109,7 +114,7 @@ class _DeletePersonPageState extends State<DeletePersonPage> {
                                     title: Text(person['name']),
                                     subtitle: Text(person['designation']),
                                     trailing: IconButton(
-                                      icon: Icon(Icons.delete),
+                                      icon: const Icon(Icons.delete),
                                       onPressed: () => _confirmDelete(person.id),
                                     ),
                                   );

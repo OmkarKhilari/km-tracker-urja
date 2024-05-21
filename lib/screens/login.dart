@@ -6,6 +6,8 @@ import 'package:km_tracker/screens/edit_page.dart';
 import 'package:km_tracker/widgets/loading_screen.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -30,24 +32,27 @@ class _LoginPageState extends State<LoginPage> {
         final User? user = userCredential.user;
 
         if (user != null && user.email!.endsWith('@gmail.com')) {
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Welcome: ${user.displayName}')),
           );
+          // ignore: use_build_context_synchronously
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => EditPage()),
+            MaterialPageRoute(builder: (context) => const EditPage()),
           );
         } else {
           await _auth.signOut();
+          // ignore: use_build_context_synchronously
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text('Access Denied'),
-              content: Text('Please use your company email to log in.'),
+              title: const Text('Access Denied'),
+              content: const Text('Please use your company email to log in.'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text('OK'),
+                  child: const Text('OK'),
                 ),
               ],
             ),
@@ -56,18 +61,19 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (error) {
       print(error);
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign in failed. Please try again.')),
+        const SnackBar(content: Text('Sign in failed. Please try again.')),
       );
     } finally {
-      _isLoading.value = false;  // Hide loader
+      _isLoading.value = false;
     }
   }
 
   void _goToFormPage(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => FormPage()),
+      MaterialPageRoute(builder: (context) => const FormPage()),
     );
   }
 
@@ -86,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    Text(
+                    const Text(
                       'Welcome to Company',
                       style: TextStyle(
                         color: Colors.green,
@@ -94,26 +100,26 @@ class _LoginPageState extends State<LoginPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 50),
+                    const SizedBox(height: 50),
                     ElevatedButton(
                       onPressed: () => _loginWithGoogle(context),
-                      child: Text('Login with Google (HR)'),
+                      child: const Text('Login with Google (HR)'),
                       style: ElevatedButton.styleFrom(
                         primary: Colors.green,
                         onPrimary: Colors.white,
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                        textStyle: TextStyle(fontSize: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                        textStyle: const TextStyle(fontSize: 16),
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => _goToFormPage(context),
-                      child: Text('Continue as Employee'),
+                      child: const Text('Continue as Employee'),
                       style: ElevatedButton.styleFrom(
                         primary: Colors.green,
                         onPrimary: Colors.white,
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                        textStyle: TextStyle(fontSize: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                        textStyle: const TextStyle(fontSize: 16),
                       ),
                     ),
                   ],

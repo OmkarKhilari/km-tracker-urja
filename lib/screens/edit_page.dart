@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class EditPage extends StatelessWidget {
+  const EditPage({super.key});
+
   Future<void> _logout(BuildContext context) async {
     final GoogleSignIn _googleSignIn = GoogleSignIn();
     final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -26,7 +28,7 @@ class EditPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Page'),
+        title: const Text('Edit Page'),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -36,7 +38,7 @@ class EditPage extends StatelessWidget {
             },
             itemBuilder: (BuildContext context) {
               return [
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'logout',
                   child: Text('Logout'),
                 ),
@@ -56,17 +58,17 @@ class EditPage extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => AddPersonPage()),
                 );
               },
-              child: Text('Add People'),
+              child: const Text('Add People'),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => DeletePersonPage()),
+                  MaterialPageRoute(builder: (context) => const DeletePersonPage()),
                 );
               },
-              child: Text('Delete People'),
+              child: const Text('Delete People'),
             ),
           ],
         ),

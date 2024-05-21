@@ -18,7 +18,7 @@ class LoadingScreen extends StatelessWidget {
         if (isLoading)
           Container(
             color: Colors.black45,
-            child: Center(
+            child: const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
               ),

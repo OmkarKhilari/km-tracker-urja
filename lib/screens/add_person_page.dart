@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:km_tracker/widgets/loading_screen.dart';
 
 class AddPersonPage extends StatefulWidget {
+  const AddPersonPage({super.key});
+
   @override
   _AddPersonPageState createState() => _AddPersonPageState();
 }
@@ -12,17 +14,19 @@ class _AddPersonPageState extends State<AddPersonPage> {
   final _nameController = TextEditingController();
   String? _selectedBranch;
   String? _selectedPosition;
-  final ValueNotifier<bool> _isLoading = ValueNotifier(false);  // Loading state
+  final ValueNotifier<bool> _isLoading = ValueNotifier(false); 
 
   void _addPerson() async {
-    if (_formKey.currentState!.validate() && _selectedBranch != null && _selectedPosition != null) {
-      _isLoading.value = true;  // Show loader
+    if (_formKey.currentState!.validate() &&
+        _selectedBranch != null &&
+        _selectedPosition != null) {
+      _isLoading.value = true; 
       await FirebaseFirestore.instance.collection('employees').add({
         'name': _nameController.text,
         'designation': _selectedPosition,
         'branch': _selectedBranch,
       });
-      _isLoading.value = false;  // Hide loader
+      _isLoading.value = false; 
       Navigator.pop(context);
     }
   }
@@ -36,7 +40,7 @@ class _AddPersonPageState extends State<AddPersonPage> {
           isLoading: isLoading,
           child: Scaffold(
             appBar: AppBar(
-              title: Text('Add Person'),
+              title: const Text('Add Person'),
             ),
             body: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -46,17 +50,24 @@ class _AddPersonPageState extends State<AddPersonPage> {
                   children: [
                     TextFormField(
                       controller: _nameController,
-                      decoration: InputDecoration(labelText: 'Name'),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter a name';
                         }
                         return null;
                       },
+                      decoration: InputDecoration(
+                        labelStyle: TextStyle(color: Colors.grey[600]),
+                        labelText: 'Full name',
+                        enabledBorder: const OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
+                      ),
                     ),
+                    const SizedBox(height: 20),
+
                     DropdownButtonFormField<String>(
                       value: _selectedPosition,
-                      hint: Text('Select Position'),
+                      hint: const Text('Select Position'),
                       items: [
                         'Sr. Manager',
                         'BM',
@@ -80,10 +91,16 @@ class _AddPersonPageState extends State<AddPersonPage> {
                         }
                         return null;
                       },
+                      decoration: const InputDecoration(
+                        // labelText: 'Select Position',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
+                    const SizedBox(height: 20),
+
                     DropdownButtonFormField<String>(
                       value: _selectedBranch,
-                      hint: Text('Select Branch'),
+                      hint: const Text('Select Branch'),
                       items: [
                         'Manchar',
                         'Shirur',
@@ -108,11 +125,15 @@ class _AddPersonPageState extends State<AddPersonPage> {
                         }
                         return null;
                       },
+                      decoration: const InputDecoration(
+                        // labelText: 'Select Branch',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _addPerson,
-                      child: Text('Add Person'),
+                      child: const Text('Add Person'),
                     ),
                   ],
                 ),
