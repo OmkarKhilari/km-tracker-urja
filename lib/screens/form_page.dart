@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_core/firebase_core.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
@@ -16,6 +15,7 @@ class FormPage extends StatefulWidget {
 class _FormPageState extends State<FormPage> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   List<EmployeeData> _employeeData = [];
+  final _formKey = GlobalKey<FormBuilderState>();
 
   @override
   void initState() {
@@ -68,7 +68,6 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _closingKmController = TextEditingController();
   final TextEditingController _differenceController = TextEditingController();
   double kmTravelled = 0;
-
   List<String>? _names;
   String? _selectedShift = 'Day';
   double _todaysAllowance = 0.0;
@@ -251,9 +250,8 @@ class _HomePageState extends State<HomePage> {
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.saveAndValidate()) {
-                    print(_formKey.currentState!.value);
+                    _writeData();
                     _calculateTotalIncome();
-                    writeData(_formKey.currentState!.value);
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -279,8 +277,10 @@ class _HomePageState extends State<HomePage> {
     final openingKm = double.tryParse(_openingKmController.text) ?? 0.0;
     final closingKm = double.tryParse(_closingKmController.text) ?? 0.0;
     final difference = closingKm - openingKm;
-    kmTravelled = difference;
-    _differenceController.text = difference.toString();
+    setState(() {
+      kmTravelled = difference;
+      _differenceController.text = difference.toString();
+    });
   }
 
   void _updateNames() {
@@ -297,17 +297,29 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> writeData(Map<String, dynamic> formData) async {
+  Future<void> _writeData() async {
+    final branch = _formKey.currentState?.fields['branch']?.value;
+    final position = _formKey.currentState?.fields['position']?.value;
+    final name = _formKey.currentState?.fields['name']?.value;
+    final phone = _formKey.currentState?.fields['phone']?.value;
+    final day = DateTime.now().toIso8601String();
+    final isSunday = DateTime.now().weekday == DateTime.sunday;
+
+    Map<String, dynamic> formData = {
+      'branch': branch,
+      'position': position,
+      'name': name,
+      'phone': phone,
+      'km_travelled_today': kmTravelled.toString(),
+      'day': day,
+      'is_sunday': isSunday.toString(),
+    };
+
     try {
-      // Convert form data to JSON
       String jsonData = jsonEncode(formData);
+      String apiUrl = 'http://127.0.0.1:8000/write/';
 
-      // Define the API endpoint URL
-      String apiUrl = 'http://127.0.0.1:3000/write/';
-
-      // Make a POST request to the API endpoint
-      http.Response response = await
-      http.post(
+      http.Response response = await http.post(
         Uri.parse(apiUrl),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
@@ -315,7 +327,6 @@ class _HomePageState extends State<HomePage> {
         body: jsonData,
       );
 
-      // Check if the request was successful
       if (response.statusCode == 200) {
         print('Data written successfully');
       } else {
@@ -335,7 +346,8 @@ class _HomePageState extends State<HomePage> {
     if (name != null && position != null) {
       final employee = widget.employeeData.firstWhere(
           (data) => data.name == name && data.designation == position);
-      final dailyAllowance = employee.calculateDailyAllowance(shift, isSunday, kmTravelled); // Pass kmTravelled
+      final dailyAllowance =
+          employee.calculateDailyAllowance(shift, isSunday, kmTravelled);
       setState(() {
         _todaysAllowance = dailyAllowance;
       });
@@ -379,4 +391,3 @@ class EmployeeData {
     return dailyAllowance;
   }
 }
-

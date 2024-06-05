@@ -31,18 +31,42 @@ sheet_id = "19lBAT1N_Vuu-d1GAOGEfgZ1WAHFoHjglZRv3sIWiXKg"
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
+def calculate_daily_allowance(designation, shift, is_sunday, km_travelled):
+    daily_allowance = 3.2 * km_travelled
+
+    if designation == 'BM':
+        daily_allowance += 90 if shift == 'Day' else 120
+    elif designation == 'ABM':
+        daily_allowance += 75 if shift == 'Day' else 120
+    elif designation == 'LS':
+        daily_allowance += 60 if shift == 'Day' else 120
+    elif designation == 'WS':
+        daily_allowance += 100 if shift == 'Day' else 60
+        if is_sunday:
+            daily_allowance += 100
+
+    return daily_allowance
+
 @app.post("/write/")
 async def write(request: Request):
-    form = await request.form()
+    form = await request.json()
 
     if not form:
         raise HTTPException(status_code=400, detail="No data provided")
     
     branch = form.get('branch')
+    name = form.get('name')
+    designation = form.get('position')
+    shift = form.get('day')  # Assuming the day value is provided as 'Day' or 'Night'
+    km_travelled = float(form.get('km_travelled_today'))
+    is_sunday = form.get('is_sunday', False)
+    daily_allowance = calculate_daily_allowance(designation, shift, is_sunday, km_travelled)
+
     data = {
-        'name': form.get('name'),
-        'designation': form.get('position'),  # Assuming your position field corresponds to designation
-        'value': form.get('todays_allowance')  # Modify this accordingly based on your form fields
+        'name': name,
+        'designation': designation,
+        'km_travelled': km_travelled,
+        'daily_allowance': daily_allowance
     }
     if not branch or not data:
         raise HTTPException(status_code=400, detail="Branch or data not provided")
@@ -56,9 +80,7 @@ async def write(request: Request):
             workbook = client.open_by_key(sheet_id)
             sheet = workbook.add_worksheet(title=branch, rows="100", cols="50")
             # Initialize the sheet with headers if new
-            start_date = datetime.datetime.now()
-            headers = ["Name", "Designation", "Total KM", "Total DA"] + \
-                      [f"Day {i+1} ({(start_date + datetime.timedelta(days=i)).strftime('%Y-%m-%d')})" for i in range(15)]
+            headers = ["Name", "Designation", "Total KM", "Total DA"]
             sheet.append_row(headers)
 
         # Find or add employee row
@@ -66,21 +88,19 @@ async def write(request: Request):
         if not cell:
             # New employee
             index = len(sheet.col_values(1)) + 1  # next available row
-            sheet.append_row([data['name'], data['designation']] + [''] * (14*4), index)  # Extend row with placeholders
+            sheet.append_row([data['name'], data['designation'], data['km_travelled'], data['daily_allowance']])
         else:
             index = cell.row
-
-        # Determine the day column based on the current date
-        start_date = datetime.datetime.now() - datetime.timedelta(days=1)  # Starting yesterday for the day to be correct on the spreadsheet
-        day_index = (datetime.datetime.now() - start_date).days
-        day_column = 5 + day_index  # assuming 4 initial columns, adjust if your header count changes
-
-        # Write or update data in the corresponding day's column
-        current_value = sheet.cell(index, day_column).value
-        if not current_value:
-            sheet.update_cell(index, day_column, data['value'])  # Assuming 'value' key in data dict contains the entry
+            current_km = float(sheet.cell(index, 3).value or 0)
+            current_da = float(sheet.cell(index, 4).value or 0)
+            sheet.update_cell(index, 3, current_km + data['km_travelled'])
+            sheet.update_cell(index, 4, current_da + data['daily_allowance'])
 
         return JSONResponse(content={"message": "Data written successfully"})
     except Exception as e:
         logging.exception("Error occurred while writing data:")
         raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
