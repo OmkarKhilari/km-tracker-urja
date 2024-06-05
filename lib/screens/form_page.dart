@@ -13,7 +13,7 @@ class FormPage extends StatefulWidget {
 }
 
 class _FormPageState extends State<FormPage> {
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  FirebaseFirestore firestore = FirebaseFirestore.instance;             
   List<EmployeeData> _employeeData = [];
   final _formKey = GlobalKey<FormBuilderState>();
 
@@ -158,15 +158,7 @@ class _HomePageState extends State<HomePage> {
                     [],
                 enabled: _names != null,
               ),
-              const SizedBox(height: 20),
-              FormBuilderTextField(
-                name: 'phone',
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
+
               const SizedBox(height: 20),
               TextFormField(
                 controller: _openingKmController,
@@ -262,7 +254,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
               Text(
-                'Today\'s Allowance: \$${_todaysAllowance.toStringAsFixed(2)}',
+                'Today\'s Allowance: ₹ ${_todaysAllowance.toStringAsFixed(2)}',
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
@@ -317,7 +309,7 @@ class _HomePageState extends State<HomePage> {
 
     try {
       String jsonData = jsonEncode(formData);
-      String apiUrl = 'http://127.0.0.1:8000/write/';
+      String apiUrl = 'http://20.198.8.42/write/';
 
       http.Response response = await http.post(
         Uri.parse(apiUrl),
@@ -351,7 +343,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _todaysAllowance = dailyAllowance;
       });
-      print('Total income for $name: \$${dailyAllowance.toStringAsFixed(2)}');
+      print('Total income for $name: ₹ ${dailyAllowance.toStringAsFixed(2)}');
     }
   }
 }

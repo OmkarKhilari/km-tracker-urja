@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from fastapi.middleware.cors import CORSMiddleware
 import logging
 import datetime
 
@@ -22,14 +22,14 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+
 scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name('service-account.json', scope)
 client = gspread.authorize(creds)
 
 sheet_id = "19lBAT1N_Vuu-d1GAOGEfgZ1WAHFoHjglZRv3sIWiXKg" 
-
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
 
 def calculate_daily_allowance(designation, shift, is_sunday, km_travelled):
     daily_allowance = 3.2 * km_travelled
@@ -46,6 +46,10 @@ def calculate_daily_allowance(designation, shift, is_sunday, km_travelled):
             daily_allowance += 100
 
     return daily_allowance
+
+@app.options("/write/")
+async def options_handler():
+    return JSONResponse(content="OK", status_code=200)
 
 @app.post("/write/")
 async def write(request: Request):
@@ -99,7 +103,7 @@ async def write(request: Request):
         return JSONResponse(content={"message": "Data written successfully"})
     except Exception as e:
         logging.exception("Error occurred while writing data:")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 if __name__ == "__main__":
     import uvicorn

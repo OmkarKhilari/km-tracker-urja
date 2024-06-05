@@ -17,10 +17,11 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      // throw UnsupportedError(
+      //   'DefaultFirebaseOptions have not been configured for web - '
+      //   'you can reconfigure this by running the FlutterFire CLI again.',
+      // );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -56,6 +57,15 @@ class DefaultFirebaseOptions {
     projectId: 'km-tracker-urja',
     storageBucket: 'km-tracker-urja.appspot.com',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+      apiKey: "AIzaSyDrfvuF0gPd8scwiLQnvNT0WQvP7OU4hvw",
+      authDomain: "km-tracker-urja.firebaseapp.com",
+      projectId: "km-tracker-urja",
+      storageBucket: "km-tracker-urja.appspot.com",
+      messagingSenderId: "523231893916",
+      appId: "1:523231893916:web:6fe83c367739ce74c9d059",
+      measurementId: "G-SEZ34ZJPZX");
 
   // static const FirebaseOptions ios = FirebaseOptions(
   //   apiKey: 'AIzaSyDO1JFf8Ze1d2TBFJs-56547bHOCOr_-ag',
