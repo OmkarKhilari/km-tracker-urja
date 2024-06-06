@@ -68,6 +68,8 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _closingKmController = TextEditingController();
   final TextEditingController _differenceController = TextEditingController();
   double kmTravelled = 0;
+  double openingKm = 0;
+  double closingKm = 0;
   List<String>? _names;
   String? _selectedShift = 'Day';
   double _todaysAllowance = 0.0;
@@ -265,8 +267,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _calculateDifference() {
-    final openingKm = double.tryParse(_openingKmController.text) ?? 0.0;
-    final closingKm = double.tryParse(_closingKmController.text) ?? 0.0;
+    openingKm = double.tryParse(_openingKmController.text) ?? 0.0;
+    closingKm = double.tryParse(_closingKmController.text) ?? 0.0;
     final difference = closingKm - openingKm;
     setState(() {
       kmTravelled = difference;
@@ -292,7 +294,6 @@ class _HomePageState extends State<HomePage> {
     final branch = _formKey.currentState?.fields['branch']?.value;
     final position = _formKey.currentState?.fields['position']?.value;
     final name = _formKey.currentState?.fields['name']?.value;
-    final phone = _formKey.currentState?.fields['phone']?.value;
     final day = DateTime.now().toIso8601String();
     final isSunday = DateTime.now().weekday == DateTime.sunday;
 
@@ -300,7 +301,8 @@ class _HomePageState extends State<HomePage> {
       'branch': branch,
       'position': position,
       'name': name,
-      'phone': phone,
+      'openingKm' : openingKm,
+      'closingKm' : closingKm,
       'km_travelled_today': kmTravelled.toString(),
       'day': day,
       'is_sunday': isSunday.toString(),

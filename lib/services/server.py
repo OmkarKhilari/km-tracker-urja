@@ -62,44 +62,39 @@ async def write(request: Request):
     branch = form.get('branch')
     name = form.get('name')
     designation = form.get('position')
-    shift = form.get('day')  # Assuming the day value is provided as 'Day' or 'Night'
+    shift = form.get('day')  
+    opening_km = float(form.get('openingKm'))
+    closing_km = float(form.get('closingKm'))
     km_travelled = float(form.get('km_travelled_today'))
     is_sunday = form.get('is_sunday', False)
     daily_allowance = calculate_daily_allowance(designation, shift, is_sunday, km_travelled)
 
-    data = {
-        'name': name,
-        'designation': designation,
-        'km_travelled': km_travelled,
-        'daily_allowance': daily_allowance
-    }
-    if not branch or not data:
-        raise HTTPException(status_code=400, detail="Branch or data not provided")
+    if not branch:
+        raise HTTPException(status_code=400, detail="Branch not provided")
 
     try:
         # Load or create a sheet for the specified branch
+        workbook = client.open_by_key(sheet_id)
         try:
-            workbook = client.open_by_key(sheet_id)
             sheet = workbook.worksheet(branch)
         except gspread.WorksheetNotFound:
-            workbook = client.open_by_key(sheet_id)
             sheet = workbook.add_worksheet(title=branch, rows="100", cols="50")
             # Initialize the sheet with headers if new
-            headers = ["Name", "Designation", "Total KM", "Total DA"]
+            headers = ["Name", "Designation", "Opening Km", "Closing Km", "KM Travelled Today", "Daily Allowance"]
             sheet.append_row(headers)
 
         # Find or add employee row
-        cell = sheet.find(data['name'], in_column=1)
+        cell = sheet.find(name, in_column=1)
         if not cell:
             # New employee
-            index = len(sheet.col_values(1)) + 1  # next available row
-            sheet.append_row([data['name'], data['designation'], data['km_travelled'], data['daily_allowance']])
+            sheet.append_row([name, designation, opening_km, closing_km, km_travelled, daily_allowance])
         else:
             index = cell.row
-            current_km = float(sheet.cell(index, 3).value or 0)
-            current_da = float(sheet.cell(index, 4).value or 0)
-            sheet.update_cell(index, 3, current_km + data['km_travelled'])
-            sheet.update_cell(index, 4, current_da + data['daily_allowance'])
+            row_values = sheet.row_values(index)
+            first_empty_col = len(row_values) + 1  # get index of the first empty cell in the row
+            # Append data in the first empty cell in the row for the same employee
+            update_range = f"{chr(64 + first_empty_col)}{index}:{chr(64 + first_empty_col + 3)}{index}"
+            sheet.update(update_range, [[opening_km, closing_km, km_travelled, daily_allowance]])
 
         return JSONResponse(content={"message": "Data written successfully"})
     except Exception as e:
