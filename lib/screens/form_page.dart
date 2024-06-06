@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:km_tracker/screens/login.dart';
+import 'package:km_tracker/widgets/loading_screen.dart';
 
 class FormPage extends StatefulWidget {
   const FormPage({super.key});
@@ -73,196 +77,232 @@ class _HomePageState extends State<HomePage> {
   List<String>? _names;
   String? _selectedShift = 'Day';
   double _todaysAllowance = 0.0;
+  final ValueNotifier<bool> _isLoading = ValueNotifier(false);
 
+  void submitForm() async {
+  if (_formKey.currentState!.saveAndValidate()) {
+    _calculateTotalIncome();
+    _isLoading.value = true;
+    await _writeData();
+    _isLoading.value = false;
+
+    // Show an alert dialog with a "Done" button
+    // ignore: use_build_context_synchronously
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Form Submitted'),
+          content: const Text('Your form has been successfully submitted.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Done'),
+              onPressed: () {
+                if (Platform.isAndroid || Platform.isIOS) {
+                  exit(0);  
+                } if (kIsWeb) {
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("KM Tracker"),
-      ),
-      body: FormBuilder(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: <Widget>[
-              FormBuilderDropdown(
-                name: 'branch',
-                decoration: InputDecoration(
-                  labelText: 'Select Branch',
-                  hintText: 'Select Branch',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _formKey.currentState!.fields['branch']!.reset();
-                      setState(() {
-                        _names = null;
-                      });
-                    },
-                  ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isLoading,
+      builder: (BuildContext context, bool isLoading, Widget? child) {
+        return LoadingScreen(
+          isLoading: isLoading,
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text("KM Tracker"),
+            ),
+            body: FormBuilder(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: <Widget>[
+                    FormBuilderDropdown(
+                      name: 'branch',
+                      decoration: InputDecoration(
+                        labelText: 'Select Branch',
+                        hintText: 'Select Branch',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _formKey.currentState!.fields['branch']!.reset();
+                            setState(() {
+                              _names = null;
+                            });
+                          },
+                        ),
+                      ),
+                      items: [
+                        'Manchar',
+                        'Alephata',
+                        'Urulikanchan',
+                        'Shirur',
+                        'Sangamner',
+                        'Nirgudsar'
+                      ]
+                          .map((branch) => DropdownMenuItem(
+                                value: branch,
+                                child: Text(branch),
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    FormBuilderDropdown(
+                      name: 'position',
+                      decoration: InputDecoration(
+                        labelText: 'Select Position',
+                        hintText: 'Select Position',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _formKey.currentState!.fields['position']!.reset();
+                            setState(() {
+                              _names = null;
+                            });
+                          },
+                        ),
+                      ),
+                      items: ['Sr. Manager', 'BM', 'ABM', 'LS', 'WS']
+                          .map((position) => DropdownMenuItem(
+                                value: position,
+                                child: Text(position),
+                              ))
+                          .toList(),
+                      onChanged: (String? newPosition) {
+                        _formKey.currentState!.fields['name']!.didChange(null);
+                        _updateNames();
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    FormBuilderDropdown(
+                      name: 'name',
+                      decoration: const InputDecoration(
+                        labelText: 'Name',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _names
+                              ?.map((name) => DropdownMenuItem(
+                                    value: name,
+                                    child: Text(name),
+                                  ))
+                              .toList() ??
+                          [],
+                      enabled: _names != null,
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _openingKmController,
+                      decoration: const InputDecoration(
+                        labelText: 'Opening KM',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        _calculateDifference();
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _closingKmController,
+                      decoration: const InputDecoration(
+                        labelText: 'Closing KM',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        _calculateDifference();
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _differenceController,
+                      readOnly: true,
+                      decoration: const InputDecoration(
+                        labelText: 'KM Travelled Today',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    DropdownButton<String>(
+                      value: _selectedShift,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedShift = newValue;
+                        });
+                      },
+                      items: ['Day', 'Night', 'Sunday']
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () async {
+                        FilePickerResult? result =
+                            await FilePicker.platform.pickFiles();
+                        if (result != null) {
+                          setState(() {
+                            _openingKmFile = result.files.first;
+                          });
+                        }
+                      },
+                      child: const Text('Opening KM PROOF (Select File)'),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(_openingKmFile?.name ?? 'No file selected'),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () async {
+                        FilePickerResult? result =
+                            await FilePicker.platform.pickFiles();
+                        if (result != null) {
+                          setState(() {
+                            _closingKmFile = result.files.first;
+                          });
+                        }
+                      },
+                      child: const Text('Closing KM PROOF (Select File)'),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(_closingKmFile?.name ?? 'No file selected'),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: submitForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.yellow,
+                      ),
+                      child: const Text('Submit'),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Today\'s Allowance: ₹ ${_todaysAllowance.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
-                items: [
-                  'Manchar',
-                  'Alephata',
-                  'Urulikanchan',
-                  'Shirur',
-                  'Sangamner',
-                  'Nirgudsar'
-                ]
-                    .map((branch) => DropdownMenuItem(
-                          value: branch,
-                          child: Text(branch),
-                        ))
-                    .toList(),
               ),
-              const SizedBox(height: 20),
-              FormBuilderDropdown(
-                name: 'position',
-                decoration: InputDecoration(
-                  labelText: 'Select Position',
-                  hintText: 'Select Position',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _formKey.currentState!.fields['position']!.reset();
-                      setState(() {
-                        _names = null;
-                      });
-                    },
-                  ),
-                ),
-                items: ['Sr. Manager', 'BM', 'ABM', 'LS', 'WS']
-                    .map((position) => DropdownMenuItem(
-                          value: position,
-                          child: Text(position),
-                        ))
-                    .toList(),
-                onChanged: (String? newPosition) {
-                  _formKey.currentState!.fields['name']!.didChange(null);
-                  _updateNames();
-                },
-              ),
-              const SizedBox(height: 20),
-              FormBuilderDropdown(
-                name: 'name',
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-                items: _names
-                        ?.map((name) => DropdownMenuItem(
-                              value: name,
-                              child: Text(name),
-                            ))
-                        .toList() ??
-                    [],
-                enabled: _names != null,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _openingKmController,
-                decoration: const InputDecoration(
-                  labelText: 'Opening KM',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  _calculateDifference();
-                },
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _closingKmController,
-                decoration: const InputDecoration(
-                  labelText: 'Closing KM',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  _calculateDifference();
-                },
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _differenceController,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'KM Travelled Today',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              DropdownButton<String>(
-                value: _selectedShift,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedShift = newValue;
-                  });
-                },
-                items: ['Day', 'Night']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  FilePickerResult? result =
-                      await FilePicker.platform.pickFiles();
-                  if (result != null) {
-                    setState(() {
-                      _openingKmFile = result.files.first;
-                    });
-                  }
-                },
-                child: const Text('Opening KM PROOF (Select File)'),
-              ),
-              const SizedBox(height: 10),
-              Text(_openingKmFile?.name ?? 'No file selected'),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  FilePickerResult? result =
-                      await FilePicker.platform.pickFiles();
-                  if (result != null) {
-                    setState(() {
-                      _closingKmFile = result.files.first;
-                    });
-                  }
-                },
-                child: const Text('Closing KM PROOF (Select File)'),
-              ),
-              const SizedBox(height: 10),
-              Text(_closingKmFile?.name ?? 'No file selected'),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.saveAndValidate()) {
-                    _writeData();
-                    _calculateTotalIncome();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.yellow,
-                ),
-                child: const Text('Submit'),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Today\'s Allowance: ₹ ${_todaysAllowance.toStringAsFixed(2)}',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -296,16 +336,18 @@ class _HomePageState extends State<HomePage> {
     final name = _formKey.currentState?.fields['name']?.value;
     final day = DateTime.now().toIso8601String();
     final isSunday = DateTime.now().weekday == DateTime.sunday;
+    final allowance = _todaysAllowance;
 
     Map<String, dynamic> formData = {
       'branch': branch,
       'position': position,
       'name': name,
-      'openingKm' : openingKm,
-      'closingKm' : closingKm,
+      'openingKm': openingKm,
+      'closingKm': closingKm,
       'km_travelled_today': kmTravelled.toString(),
       'day': day,
       'is_sunday': isSunday.toString(),
+      'daily_allowance': allowance,
     };
 
     try {
@@ -315,7 +357,7 @@ class _HomePageState extends State<HomePage> {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
+          'Content-Type': 'application/json; charset=UTF-8'
         },
         body: jsonData,
       );
@@ -390,8 +432,11 @@ class EmployeeData {
         dailyAllowance += shift == 'Day' ? 60 : 120;
         break;
       case 'WS':
-        dailyAllowance += shift == 'Day' ? 100 : 60;
-        if (isSunday) dailyAllowance += 100;
+        dailyAllowance += shift == 'Day'
+            ? 100
+            : shift == 'Sunday'
+                ? 100
+                : 60;
         break;
       default:
         break;

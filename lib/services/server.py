@@ -32,22 +32,6 @@ client = gspread.authorize(creds)
 
 sheet_id = "19lBAT1N_Vuu-d1GAOGEfgZ1WAHFoHjglZRv3sIWiXKg" 
 
-def calculate_daily_allowance(designation, shift, is_sunday, km_travelled):
-    daily_allowance = 3.2 * km_travelled
-
-    if designation == 'BM':
-        daily_allowance += 90 if shift == 'Day' else 120
-    elif designation == 'ABM':
-        daily_allowance += 75 if shift == 'Day' else 120
-    elif designation == 'LS':
-        daily_allowance += 60 if shift == 'Day' else 120
-    elif designation == 'WS':
-        daily_allowance += 100 if shift == 'Day' else 60
-        if is_sunday:
-            daily_allowance += 100
-
-    return daily_allowance
-
 @app.options("/write/")
 async def options_handler():
     return JSONResponse(content="OK", status_code=200)
@@ -67,7 +51,7 @@ async def write(request: Request):
     closing_km = float(form.get('closingKm'))
     km_travelled = float(form.get('km_travelled_today'))
     is_sunday = form.get('is_sunday', False)
-    daily_allowance = calculate_daily_allowance(designation, shift, is_sunday, km_travelled)
+    daily_allowance = float(form.get('daily_allowance'))
 
     if not branch:
         raise HTTPException(status_code=400, detail="Branch not provided")

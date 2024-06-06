@@ -27,6 +27,7 @@ class _AddPersonPageState extends State<AddPersonPage> {
         'branch': _selectedBranch,
       });
       _isLoading.value = false; 
+      // ignore: use_build_context_synchronously
       Navigator.pop(context);
     }
   }
