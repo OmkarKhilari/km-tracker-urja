@@ -13,7 +13,7 @@ class FormPage extends StatefulWidget {
 }
 
 class _FormPageState extends State<FormPage> {
-  FirebaseFirestore firestore = FirebaseFirestore.instance;             
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
   List<EmployeeData> _employeeData = [];
   final _formKey = GlobalKey<FormBuilderState>();
 
@@ -158,7 +158,6 @@ class _HomePageState extends State<HomePage> {
                     [],
                 enabled: _names != null,
               ),
-
               const SizedBox(height: 20),
               TextFormField(
                 controller: _openingKmController,
@@ -281,8 +280,8 @@ class _HomePageState extends State<HomePage> {
     if (branch != null && position != null) {
       setState(() {
         _names = widget.employeeData
-            .where((data) =>
-                data.branch == branch && data.designation == position)
+            .where(
+                (data) => data.branch == branch && data.designation == position)
             .map((data) => data.name)
             .toList();
       });
@@ -309,9 +308,9 @@ class _HomePageState extends State<HomePage> {
 
     try {
       String jsonData = jsonEncode(formData);
-      String apiUrl = 'http://20.198.8.42/write/';
+      String apiUrl = 'http://127.0.0.1:8000/write/';
 
-      http.Response response = await http.post(
+      final response = await http.post(
         Uri.parse(apiUrl),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
@@ -321,11 +320,26 @@ class _HomePageState extends State<HomePage> {
 
       if (response.statusCode == 200) {
         print('Data written successfully');
+        // Show a success message to the user
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Data written successfully')),
+        );
       } else {
         print('Failed to write data: ${response.body}');
+        // Show an error message to the user
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to write data: ${response.body}')),
+        );
       }
     } catch (e) {
       print('Error occurred while writing data: $e');
+      // Show an error message to the user
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error occurred while writing data: $e')),
+      );
     }
   }
 
@@ -359,7 +373,8 @@ class EmployeeData {
     required this.branch,
   });
 
-  double calculateDailyAllowance(String shift, bool isSunday, double kmTravelled) {
+  double calculateDailyAllowance(
+      String shift, bool isSunday, double kmTravelled) {
     double dailyAllowance = 3.2 * kmTravelled;
 
     switch (designation) {
