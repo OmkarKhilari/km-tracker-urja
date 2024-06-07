@@ -14,20 +14,19 @@ class _AddPersonPageState extends State<AddPersonPage> {
   final _nameController = TextEditingController();
   String? _selectedBranch;
   String? _selectedPosition;
-  final ValueNotifier<bool> _isLoading = ValueNotifier(false); 
+  final ValueNotifier<bool> _isLoading = ValueNotifier(false);
 
   void _addPerson() async {
     if (_formKey.currentState!.validate() &&
         _selectedBranch != null &&
         _selectedPosition != null) {
-      _isLoading.value = true; 
+      _isLoading.value = true;
       await FirebaseFirestore.instance.collection('employees').add({
         'name': _nameController.text,
         'designation': _selectedPosition,
         'branch': _selectedBranch,
       });
-      _isLoading.value = false; 
-      // ignore: use_build_context_synchronously
+      _isLoading.value = false;
       Navigator.pop(context);
     }
   }
@@ -42,8 +41,16 @@ class _AddPersonPageState extends State<AddPersonPage> {
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Add Person'),
+              backgroundColor: Colors.green.shade700,
             ),
-            body: Padding(
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.green.shade100, Colors.white],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
               padding: const EdgeInsets.all(16.0),
               child: Form(
                 key: _formKey,
@@ -58,14 +65,20 @@ class _AddPersonPageState extends State<AddPersonPage> {
                         return null;
                       },
                       decoration: InputDecoration(
-                        labelStyle: TextStyle(color: Colors.grey[600]),
+                        labelStyle: TextStyle(color: Colors.green.shade700),
                         labelText: 'Full name',
-                        enabledBorder: const OutlineInputBorder(),
-                        border: const OutlineInputBorder(),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.green.shade100!),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        filled: true,
+                        fillColor: Colors.green.shade50,
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     DropdownButtonFormField<String>(
                       value: _selectedPosition,
                       hint: const Text('Select Position'),
@@ -92,13 +105,19 @@ class _AddPersonPageState extends State<AddPersonPage> {
                         }
                         return null;
                       },
-                      decoration: const InputDecoration(
-                        // labelText: 'Select Position',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.green.shade100!),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        filled: true,
+                        fillColor: Colors.green.shade50,
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     DropdownButtonFormField<String>(
                       value: _selectedBranch,
                       hint: const Text('Select Branch'),
@@ -126,14 +145,31 @@ class _AddPersonPageState extends State<AddPersonPage> {
                         }
                         return null;
                       },
-                      decoration: const InputDecoration(
-                        // labelText: 'Select Branch',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.green.shade100!),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        filled: true,
+                        fillColor: Colors.green.shade50,
                       ),
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _addPerson,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 50,
+                          vertical: 15,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                       child: const Text('Add Person'),
                     ),
                   ],

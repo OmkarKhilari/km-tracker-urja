@@ -6,6 +6,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
 import 'package:km_tracker/screens/login.dart';
 import 'package:km_tracker/widgets/loading_screen.dart';
 
@@ -48,6 +49,9 @@ class _FormPageState extends State<FormPage> {
       theme: ThemeData(
         primarySwatch: Colors.green,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        textTheme: GoogleFonts.latoTextTheme(
+          Theme.of(context).textTheme,
+        ),
       ),
       home: HomePage(
         employeeData: _employeeData,
@@ -80,37 +84,39 @@ class _HomePageState extends State<HomePage> {
   final ValueNotifier<bool> _isLoading = ValueNotifier(false);
 
   void submitForm() async {
-  if (_formKey.currentState!.saveAndValidate()) {
-    _calculateTotalIncome();
-    _isLoading.value = true;
-    await _writeData();
-    _isLoading.value = false;
+    if (_formKey.currentState!.saveAndValidate()) {
+      _calculateTotalIncome();
+      _isLoading.value = true;
+      await _writeData();
+      _isLoading.value = false;
 
-    // Show an alert dialog with a "Done" button
-    // ignore: use_build_context_synchronously
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Form Submitted'),
-          content: const Text('Your form has been successfully submitted.'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Done'),
-              onPressed: () {
-                if (Platform.isAndroid || Platform.isIOS) {
-                  exit(0);  
-                } if (kIsWeb) {
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
+      // Show an alert dialog with a "Done" button
+      // ignore: use_build_context_synchronously
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Form Submitted'),
+            content: const Text('Your form has been successfully submitted.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Done'),
+                onPressed: () {
+                  if (Platform.isAndroid || Platform.isIOS) {
+                    exit(0);
+                  }
+                  if (kIsWeb) {
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
-}
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
@@ -120,183 +126,235 @@ class _HomePageState extends State<HomePage> {
           isLoading: isLoading,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text("KM Tracker"),
+              title: const Text("KM Tracker",
+                  style: TextStyle(color: Colors.white)),
+              backgroundColor: Colors.green.shade700,
+              elevation: 0,
             ),
-            body: FormBuilder(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: <Widget>[
-                    FormBuilderDropdown(
-                      name: 'branch',
-                      decoration: InputDecoration(
-                        labelText: 'Select Branch',
-                        hintText: 'Select Branch',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _formKey.currentState!.fields['branch']!.reset();
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.green.shade100, Colors.white],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: FormBuilder(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      FormBuilderDropdown(
+                        name: 'branch',
+                        decoration: InputDecoration(
+                          labelText: 'Select Branch',
+                          hintText: 'Select Branch',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _formKey.currentState!.fields['branch']!.reset();
+                              setState(() {
+                                _names = null;
+                              });
+                            },
+                          ),
+                        ),
+                        items: [
+                          'Manchar',
+                          'Alephata',
+                          'Urulikanchan',
+                          'Shirur',
+                          'Sangamner',
+                          'Nirgudsar'
+                        ]
+                            .map((branch) => DropdownMenuItem(
+                                  value: branch,
+                                  child: Text(branch),
+                                ))
+                            .toList(),
+                      ),
+                      const SizedBox(height: 20),
+                      FormBuilderDropdown(
+                        name: 'position',
+                        decoration: InputDecoration(
+                          labelText: 'Select Position',
+                          hintText: 'Select Position',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _formKey.currentState!.fields['position']!
+                                  .reset();
+                              setState(() {
+                                _names = null;
+                              });
+                            },
+                          ),
+                        ),
+                        items: ['Sr. Manager', 'BM', 'ABM', 'LS', 'WS']
+                            .map((position) => DropdownMenuItem(
+                                  value: position,
+                                  child: Text(position),
+                                ))
+                            .toList(),
+                        onChanged: (String? newPosition) {
+                          _formKey.currentState!.fields['name']!
+                              .didChange(null);
+                          _updateNames();
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      FormBuilderDropdown(
+                        name: 'name',
+                        decoration: InputDecoration(
+                          labelText: 'Name',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        items: _names
+                                ?.map((name) => DropdownMenuItem(
+                                      value: name,
+                                      child: Text(name),
+                                    ))
+                                .toList() ??
+                            [],
+                        enabled: _names != null,
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _openingKmController,
+                        decoration: InputDecoration(
+                          labelText: 'Opening KM',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          _calculateDifference();
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _closingKmController,
+                        decoration: InputDecoration(
+                          labelText: 'Closing KM',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          _calculateDifference();
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _differenceController,
+                        decoration: InputDecoration(
+                          labelText: 'KM Travelled Today',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        readOnly: true,
+                      ),
+                      const SizedBox(height: 20),
+                      FormBuilderDropdown(
+                        name: 'shift',
+                        decoration: InputDecoration(
+                          labelText: 'Shift',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        initialValue: 'Day',
+                        items: ['Day', 'Night']
+                            .map((shift) => DropdownMenuItem(
+                                  value: shift,
+                                  child: Text(shift),
+                                ))
+                            .toList(),
+                        onChanged: (String? newShift) {
+                          setState(() {
+                            _selectedShift = newShift;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () async {
+                          FilePickerResult? result =
+                              await FilePicker.platform.pickFiles();
+                          if (result != null) {
                             setState(() {
-                              _names = null;
+                              _openingKmFile = result.files.first;
                             });
-                          },
+                          }
+                        },
+                        child: const Text('Opening KM PROOF (Select File)'),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.green.shade700,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
-                      items: [
-                        'Manchar',
-                        'Alephata',
-                        'Urulikanchan',
-                        'Shirur',
-                        'Sangamner',
-                        'Nirgudsar'
-                      ]
-                          .map((branch) => DropdownMenuItem(
-                                value: branch,
-                                child: Text(branch),
-                              ))
-                          .toList(),
-                    ),
-                    const SizedBox(height: 20),
-                    FormBuilderDropdown(
-                      name: 'position',
-                      decoration: InputDecoration(
-                        labelText: 'Select Position',
-                        hintText: 'Select Position',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _formKey.currentState!.fields['position']!.reset();
+                      const SizedBox(height: 10),
+                      Text(_openingKmFile?.name ?? 'No file selected'),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () async {
+                          FilePickerResult? result =
+                              await FilePicker.platform.pickFiles();
+                          if (result != null) {
                             setState(() {
-                              _names = null;
+                              _closingKmFile = result.files.first;
                             });
-                          },
+                          }
+                        },
+                        child: const Text('Closing KM PROOF (Select File)'),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.green.shade700,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
-                      items: ['Sr. Manager', 'BM', 'ABM', 'LS', 'WS']
-                          .map((position) => DropdownMenuItem(
-                                value: position,
-                                child: Text(position),
-                              ))
-                          .toList(),
-                      onChanged: (String? newPosition) {
-                        _formKey.currentState!.fields['name']!.didChange(null);
-                        _updateNames();
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    FormBuilderDropdown(
-                      name: 'name',
-                      decoration: const InputDecoration(
-                        labelText: 'Name',
-                        border: OutlineInputBorder(),
+                      const SizedBox(height: 10),
+                      Text(_closingKmFile?.name ?? 'No file selected'),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: submitForm,
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.yellow,
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Submit'),
                       ),
-                      items: _names
-                              ?.map((name) => DropdownMenuItem(
-                                    value: name,
-                                    child: Text(name),
-                                  ))
-                              .toList() ??
-                          [],
-                      enabled: _names != null,
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _openingKmController,
-                      decoration: const InputDecoration(
-                        labelText: 'Opening KM',
-                        border: OutlineInputBorder(),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Today\'s Allowance: ₹ ${_todaysAllowance.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) {
-                        _calculateDifference();
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _closingKmController,
-                      decoration: const InputDecoration(
-                        labelText: 'Closing KM',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) {
-                        _calculateDifference();
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _differenceController,
-                      readOnly: true,
-                      decoration: const InputDecoration(
-                        labelText: 'KM Travelled Today',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    DropdownButton<String>(
-                      value: _selectedShift,
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedShift = newValue;
-                        });
-                      },
-                      items: ['Day', 'Night', 'Sunday']
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () async {
-                        FilePickerResult? result =
-                            await FilePicker.platform.pickFiles();
-                        if (result != null) {
-                          setState(() {
-                            _openingKmFile = result.files.first;
-                          });
-                        }
-                      },
-                      child: const Text('Opening KM PROOF (Select File)'),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(_openingKmFile?.name ?? 'No file selected'),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () async {
-                        FilePickerResult? result =
-                            await FilePicker.platform.pickFiles();
-                        if (result != null) {
-                          setState(() {
-                            _closingKmFile = result.files.first;
-                          });
-                        }
-                      },
-                      child: const Text('Closing KM PROOF (Select File)'),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(_closingKmFile?.name ?? 'No file selected'),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: submitForm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.yellow,
-                      ),
-                      child: const Text('Submit'),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Today\'s Allowance: ₹ ${_todaysAllowance.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

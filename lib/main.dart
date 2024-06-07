@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:km_tracker/database/upload_initial_data.dart';
 import 'package:km_tracker/screens/form_page.dart';
 import 'package:km_tracker/screens/login.dart';
@@ -38,12 +39,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'KM Tracker',
       theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: Colors.green, 
-          accentColor: Colors.red, 
-        ).copyWith(
-          background: Colors.white, 
+        primarySwatch: Colors.green,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        textTheme: GoogleFonts.latoTextTheme(
+          Theme.of(context).textTheme,
         ),
       ),
       home: LoginPage(),

@@ -31,7 +31,7 @@ class _DeletePersonPageState extends State<DeletePersonPage> {
               onPressed: () {
                 Navigator.of(context).pop(); 
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
@@ -56,8 +56,16 @@ class _DeletePersonPageState extends State<DeletePersonPage> {
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Delete Person'),
+              backgroundColor: Colors.green.shade700,
             ),
-            body: Padding(
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.green.shade100, Colors.white],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
@@ -88,13 +96,24 @@ class _DeletePersonPageState extends State<DeletePersonPage> {
                       }
                       return null;
                     },
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder()
+                    decoration: InputDecoration(
+                      labelText: 'Select Branch',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      filled: true,
+                      fillColor: Colors.green.shade50,
                     ),
                   ),
+                  const SizedBox(height: 20),
                   Expanded(
                     child: _selectedBranch == null
-                        ? const Center(child: Text('Select a branch to see the people'))
+                        ? const Center(
+                            child: Text(
+                              'Select a branch to see the people',
+                              style: TextStyle(fontSize: 18, color: Colors.black54),
+                            ),
+                          )
                         : StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('employees')
@@ -110,12 +129,19 @@ class _DeletePersonPageState extends State<DeletePersonPage> {
                                 itemCount: people.length,
                                 itemBuilder: (context, index) {
                                   final person = people[index];
-                                  return ListTile(
-                                    title: Text(person['name']),
-                                    subtitle: Text(person['designation']),
-                                    trailing: IconButton(
-                                      icon: const Icon(Icons.delete),
-                                      onPressed: () => _confirmDelete(person.id),
+                                  return Card(
+                                    elevation: 2,
+                                    margin: const EdgeInsets.symmetric(vertical: 8),
+                                    child: ListTile(
+                                      title: Text(
+                                        person['name'],
+                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                      subtitle: Text(person['designation']),
+                                      trailing: IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () => _confirmDelete(person.id),
+                                      ),
                                     ),
                                   );
                                 },
