@@ -92,28 +92,28 @@ class _HomePageState extends State<HomePage> {
 
       // Show an alert dialog with a "Done" button
       // ignore: use_build_context_synchronously
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Form Submitted'),
-            content: const Text('Your form has been successfully submitted.'),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Done'),
-                onPressed: () {
-                  if (Platform.isAndroid || Platform.isIOS) {
-                    exit(0);
-                  }
-                  if (kIsWeb) {
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-            ],
-          );
-        },
-      );
+      // showDialog(
+      //   context: context,
+      //   builder: (BuildContext context) {
+      //     return AlertDialog(
+      //       title: const Text('Form Submitted'),
+      //       content: const Text('Your form has been successfully submitted.'),
+      //       actions: <Widget>[
+      //         TextButton(
+      //           child: const Text('Done'),
+      //           onPressed: () {
+      //             if (Platform.isAndroid || Platform.isIOS) {
+      //               exit(0);
+      //             }
+      //             if (kIsWeb) {
+      //               Navigator.of(context).pop();
+      //             }
+      //           },
+      //         ),
+      //       ],
+      //     );
+      //   },
+      // );
     }
   }
 
