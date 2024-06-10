@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:km_tracker/screens/login.dart';
@@ -71,7 +71,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final _formKey = GlobalKey<FormBuilderState>();
-  PlatformFile? _openingKmFile, _closingKmFile;
+  File? _openingKmImage, _closingKmImage;
   final TextEditingController _openingKmController = TextEditingController();
   final TextEditingController _closingKmController = TextEditingController();
   final TextEditingController _differenceController = TextEditingController();
@@ -82,9 +82,30 @@ class _HomePageState extends State<HomePage> {
   String? _selectedShift = 'Day';
   double _todaysAllowance = 0.0;
   final ValueNotifier<bool> _isLoading = ValueNotifier(false);
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _captureImage(bool isOpeningKm) async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      setState(() {
+        if (isOpeningKm) {
+          _openingKmImage = File(image.path);
+        } else {
+          _closingKmImage = File(image.path);
+        }
+      });
+    }
+  }
 
   void submitForm() async {
     if (_formKey.currentState!.saveAndValidate()) {
+      if (_openingKmImage == null || _closingKmImage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please capture both images before submitting.')),
+        );
+        return;
+      }
+
       _calculateTotalIncome();
       _isLoading.value = true;
       await _writeData();
@@ -291,16 +312,8 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton(
-                        onPressed: () async {
-                          FilePickerResult? result =
-                              await FilePicker.platform.pickFiles();
-                          if (result != null) {
-                            setState(() {
-                              _openingKmFile = result.files.first;
-                            });
-                          }
-                        },
-                        child: const Text('Opening KM PROOF (Select File)'),
+                        onPressed: () => _captureImage(true),
+                        child: const Text('Capture Opening KM Proof'),
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
                           backgroundColor: Colors.green.shade700,
@@ -310,19 +323,11 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Text(_openingKmFile?.name ?? 'No file selected'),
+                      Text(_openingKmImage != null ? 'Opening KM Proof Captured' : 'No image captured'),
                       const SizedBox(height: 20),
                       ElevatedButton(
-                        onPressed: () async {
-                          FilePickerResult? result =
-                              await FilePicker.platform.pickFiles();
-                          if (result != null) {
-                            setState(() {
-                              _closingKmFile = result.files.first;
-                            });
-                          }
-                        },
-                        child: const Text('Closing KM PROOF (Select File)'),
+                        onPressed: () => _captureImage(false),
+                        child: const Text('Capture Closing KM Proof'),
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
                           backgroundColor: Colors.green.shade700,
@@ -332,7 +337,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Text(_closingKmFile?.name ?? 'No file selected'),
+                      Text(_closingKmImage != null ? 'Closing KM Proof Captured' : 'No image captured'),
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: submitForm,

@@ -28,30 +28,6 @@ class EditPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Edit Page',
-          style: GoogleFonts.montserrat(fontSize: 28),
-        ),
-        backgroundColor: Colors.green.shade700,
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'logout') {
-                _logout(context);
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Text('Logout'),
-                ),
-              ];
-            },
-          ),
-        ],
-      ),
       body: Stack(
         children: [
           Container(

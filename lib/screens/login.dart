@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:km_tracker/screens/form_page.dart';
@@ -17,51 +18,59 @@ class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ValueNotifier<bool> _isLoading = ValueNotifier(false);
 
-  void _loginWithGoogle(BuildContext context) async {
-    _isLoading.value = true;  
+  Future<void> _loginWithGoogle(BuildContext context) async {
+    _isLoading.value = true;
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser != null) {
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
+      UserCredential userCredential;
+      if (kIsWeb) {
+        GoogleAuthProvider googleProvider = GoogleAuthProvider();
 
-        final UserCredential userCredential = await _auth.signInWithCredential(credential);
-        final User? user = userCredential.user;
+        userCredential = await _auth.signInWithPopup(googleProvider);
+      } else {
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        if (googleUser != null) {
+          final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+          final AuthCredential credential = GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
+          );
 
-        if (user != null && user.email!.endsWith('@gmail.com')) {
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Welcome: ${user.displayName}')),
-          );
-          // ignore: use_build_context_synchronously
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const EditPage()),
-          );
+          userCredential = await _auth.signInWithCredential(credential);
         } else {
-          await _auth.signOut();
-          // ignore: use_build_context_synchronously
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Access Denied'),
-              content: const Text('Please use your company email to log in.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
+          throw FirebaseAuthException(
+            code: 'ERROR_ABORTED_BY_USER',
+            message: 'Sign in aborted by user',
           );
         }
       }
+
+      final User? user = userCredential.user;
+      if (user != null && user.email!.endsWith('@gmail.com')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Welcome: ${user.displayName}')),
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const EditPage()),
+        );
+      } else {
+        await _auth.signOut();
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Access Denied'),
+            content: const Text('Please use your company email to log in.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     } catch (error) {
       print(error);
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sign in failed. Please try again.')),
       );
@@ -69,7 +78,7 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading.value = false;
     }
   }
-  
+
   void _goToFormPage(BuildContext context) {
     Navigator.push(
       context,
