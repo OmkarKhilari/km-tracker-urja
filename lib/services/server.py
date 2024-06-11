@@ -76,6 +76,15 @@ async def write(request: Request):
             index = cell.row
             row_values = sheet.row_values(index)
             first_empty_col = len(row_values) + 1  # get index of the first empty cell in the row
+
+            # Check if headers exist in the first empty cell column and add them if they don't
+            headers_row = sheet.row_values(1)  # Assuming headers are always in the first row
+            required_headers = ["Opening Km", "Closing Km", "KM Travelled Today", "Daily Allowance"]
+
+            if not all(header in headers_row[first_empty_col-1:first_empty_col+3] for header in required_headers):
+                header_update_range = f"{chr(64 + first_empty_col)}1:{chr(64 + first_empty_col + 3)}1"
+                sheet.update(header_update_range, [required_headers])
+
             # Append data in the first empty cell in the row for the same employee
             update_range = f"{chr(64 + first_empty_col)}{index}:{chr(64 + first_empty_col + 3)}{index}"
             sheet.update(update_range, [[opening_km, closing_km, km_travelled, daily_allowance]])
