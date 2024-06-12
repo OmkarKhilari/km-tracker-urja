@@ -415,7 +415,7 @@ class _HomePageState extends State<HomePage> {
 
     try {
       String jsonData = jsonEncode(formData);
-      String apiUrl = 'http://127.0.0.1:8000/write/';
+      String apiUrl = 'https://omkar.bhaskaraa45.me/write';
 
       final response = await http.post(
         Uri.parse(apiUrl),

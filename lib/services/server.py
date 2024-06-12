@@ -13,6 +13,7 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8000",
+    "https://km-tracker-urja.netlify.app",
 ]
 
 app.add_middleware(
@@ -94,6 +95,6 @@ async def write(request: Request):
         logging.exception("Error occurred while writing data:")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="127.0.0.1", port=8000)
