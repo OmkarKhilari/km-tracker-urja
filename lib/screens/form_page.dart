@@ -298,7 +298,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         initialValue: 'Day',
-                        items: ['Day', 'Night']
+                        items: ['Day', 'Night', 'Sunday']
                             .map((shift) => DropdownMenuItem(
                                   value: shift,
                                   child: Text(shift),
