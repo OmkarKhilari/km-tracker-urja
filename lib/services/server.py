@@ -53,6 +53,7 @@ async def write(request: Request):
     km_travelled = float(form.get('km_travelled_today'))
     is_sunday = form.get('is_sunday', False)
     daily_allowance = float(form.get('daily_allowance'))
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
 
     if not branch:
         raise HTTPException(status_code=400, detail="Branch not provided")
@@ -65,14 +66,14 @@ async def write(request: Request):
         except gspread.WorksheetNotFound:
             sheet = workbook.add_worksheet(title=branch, rows="100", cols="50")
             # Initialize the sheet with headers if new
-            headers = ["Name", "Designation", "Opening Km", "Closing Km", "KM Travelled Today", "Daily Allowance"]
+            headers = ["Name", "Designation", "Date", "Opening Km", "Closing Km", "KM Travelled Today", "Total DA"]
             sheet.append_row(headers)
 
         # Find or add employee row
         cell = sheet.find(name, in_column=1)
         if not cell:
             # New employee
-            sheet.append_row([name, designation, opening_km, closing_km, km_travelled, daily_allowance])
+            sheet.append_row([name, designation, date, opening_km, closing_km, km_travelled, daily_allowance])
         else:
             index = cell.row
             row_values = sheet.row_values(index)
@@ -80,21 +81,21 @@ async def write(request: Request):
 
             # Check if headers exist in the first empty cell column and add them if they don't
             headers_row = sheet.row_values(1)  # Assuming headers are always in the first row
-            required_headers = ["Opening Km", "Closing Km", "KM Travelled Today", "Daily Allowance"]
+            required_headers = ["Date", "Opening Km", "Closing Km", "KM Travelled Today", "Total DA"]
 
-            if not all(header in headers_row[first_empty_col-1:first_empty_col+3] for header in required_headers):
-                header_update_range = f"{chr(64 + first_empty_col)}1:{chr(64 + first_empty_col + 3)}1"
+            if not all(header in headers_row[first_empty_col-1:first_empty_col+4] for header in required_headers):
+                header_update_range = f"{chr(64 + first_empty_col)}1:{chr(64 + first_empty_col + 4)}1"
                 sheet.update(header_update_range, [required_headers])
 
             # Append data in the first empty cell in the row for the same employee
-            update_range = f"{chr(64 + first_empty_col)}{index}:{chr(64 + first_empty_col + 3)}{index}"
-            sheet.update(update_range, [[opening_km, closing_km, km_travelled, daily_allowance]])
+            update_range = f"{chr(64 + first_empty_col)}{index}:{chr(64 + first_empty_col + 4)}{index}"
+            sheet.update(update_range, [[date, opening_km, closing_km, km_travelled, daily_allowance]])
 
         return JSONResponse(content={"message": "Data written successfully"})
     except Exception as e:
         logging.exception("Error occurred while writing data:")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="127.0.0.1", port=8000)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
