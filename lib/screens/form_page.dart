@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:km_tracker/screens/login.dart';
 import 'package:km_tracker/widgets/loading_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FormPage extends StatefulWidget {
   const FormPage({super.key});
@@ -83,6 +84,53 @@ class _HomePageState extends State<HomePage> {
   double _todaysAllowance = 0.0;
   final ValueNotifier<bool> _isLoading = ValueNotifier(false);
   final ImagePicker _picker = ImagePicker();
+  late SharedPreferences _prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedData();
+  }
+
+  Future<void> _loadSavedData() async {
+    _prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _openingKmController.text = _prefs.getString('openingKm') ?? '';
+      _closingKmController.text = _prefs.getString('closingKm') ?? '';
+      _differenceController.text = _prefs.getString('kmTravelled') ?? '';
+      _selectedShift = _prefs.getString('selectedShift') ?? 'Day';
+      _todaysAllowance = _prefs.getDouble('todaysAllowance') ?? 0.0;
+      String? openingKmImagePath = _prefs.getString('openingKmImagePath');
+      if (openingKmImagePath != null) {
+        _openingKmImage = File(openingKmImagePath);
+      }
+      String? closingKmImagePath = _prefs.getString('closingKmImagePath');
+      if (closingKmImagePath != null) {
+        _closingKmImage = File(closingKmImagePath);
+      }
+      _formKey.currentState?.fields['branch']
+          ?.didChange(_prefs.getString('branch'));
+      _formKey.currentState?.fields['position']
+          ?.didChange(_prefs.getString('position'));
+      _formKey.currentState?.fields['name']
+          ?.didChange(_prefs.getString('name'));
+    });
+    _updateNames();
+  }
+
+  Future<void> _saveData() async {
+    await _prefs.setString('openingKm', _openingKmController.text);
+    await _prefs.setString('closingKm', _closingKmController.text);
+    await _prefs.setString('kmTravelled', _differenceController.text);
+    await _prefs.setString('selectedShift', _selectedShift ?? 'Day');
+    await _prefs.setDouble('todaysAllowance', _todaysAllowance);
+    if (_openingKmImage != null) {
+      await _prefs.setString('openingKmImagePath', _openingKmImage!.path);
+    }
+    if (_closingKmImage != null) {
+      await _prefs.setString('closingKmImagePath', _closingKmImage!.path);
+    }
+  }
 
   Future<void> _captureImage(bool isOpeningKm) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
@@ -94,6 +142,7 @@ class _HomePageState extends State<HomePage> {
           _closingKmImage = File(image.path);
         }
       });
+      await _saveData();
     }
   }
 
@@ -101,7 +150,8 @@ class _HomePageState extends State<HomePage> {
     if (_formKey.currentState!.saveAndValidate()) {
       if (_openingKmImage == null || _closingKmImage == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please capture both images before submitting.')),
+          const SnackBar(
+              content: Text('Please capture both images before submitting.')),
         );
         return;
       }
@@ -110,6 +160,8 @@ class _HomePageState extends State<HomePage> {
       _isLoading.value = true;
       await _writeData();
       _isLoading.value = false;
+
+      await _prefs.clear();
 
       // Show an alert dialog with a "Done" button
       // ignore: use_build_context_synchronously
@@ -182,6 +234,7 @@ class _HomePageState extends State<HomePage> {
                               setState(() {
                                 _names = null;
                               });
+                              _saveData();
                             },
                           ),
                         ),
@@ -216,6 +269,7 @@ class _HomePageState extends State<HomePage> {
                               setState(() {
                                 _names = null;
                               });
+                              _saveData();
                             },
                           ),
                         ),
@@ -229,6 +283,7 @@ class _HomePageState extends State<HomePage> {
                           _formKey.currentState!.fields['name']!
                               .didChange(null);
                           _updateNames();
+                          _saveData();
                         },
                       ),
                       const SizedBox(height: 20),
@@ -248,6 +303,9 @@ class _HomePageState extends State<HomePage> {
                                 .toList() ??
                             [],
                         enabled: _names != null,
+                        onChanged: (value) {
+                          _saveData();
+                        },
                       ),
                       const SizedBox(height: 20),
                       TextFormField(
@@ -261,6 +319,7 @@ class _HomePageState extends State<HomePage> {
                         keyboardType: TextInputType.number,
                         onChanged: (value) {
                           _calculateDifference();
+                          _saveData();
                         },
                       ),
                       const SizedBox(height: 20),
@@ -275,6 +334,7 @@ class _HomePageState extends State<HomePage> {
                         keyboardType: TextInputType.number,
                         onChanged: (value) {
                           _calculateDifference();
+                          _saveData();
                         },
                       ),
                       const SizedBox(height: 20),
@@ -307,6 +367,7 @@ class _HomePageState extends State<HomePage> {
                         onChanged: (String? newShift) {
                           setState(() {
                             _selectedShift = newShift;
+                            _saveData();
                           });
                         },
                       ),
@@ -323,7 +384,9 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Text(_openingKmImage != null ? 'Opening KM Proof Captured' : 'No image captured'),
+                      Text(_openingKmImage != null
+                          ? 'Opening KM Proof Captured'
+                          : 'No image captured'),
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: () => _captureImage(false),
@@ -337,7 +400,9 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Text(_closingKmImage != null ? 'Closing KM Proof Captured' : 'No image captured'),
+                      Text(_closingKmImage != null
+                          ? 'Closing KM Proof Captured'
+                          : 'No image captured'),
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: submitForm,
@@ -380,17 +445,26 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _updateNames() {
-    final branch = _formKey.currentState?.fields['branch']?.value;
-    final position = _formKey.currentState?.fields['position']?.value;
-    if (branch != null && position != null) {
+    final selectedBranch =
+        _formKey.currentState?.fields['branch']?.value as String?;
+    final selectedPosition =
+        _formKey.currentState?.fields['position']?.value as String?;
+
+    if (selectedBranch != null && selectedPosition != null) {
       setState(() {
         _names = widget.employeeData
-            .where(
-                (data) => data.branch == branch && data.designation == position)
-            .map((data) => data.name)
+            .where((employee) =>
+                employee.branch == selectedBranch &&
+                employee.designation == selectedPosition)
+            .map((employee) => employee.name)
             .toList();
       });
+    } else {
+      setState(() {
+        _names = null;
+      });
     }
+    _saveData();
   }
 
   Future<void> _writeData() async {
