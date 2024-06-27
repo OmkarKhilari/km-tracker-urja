@@ -31,7 +31,7 @@ scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/au
 creds = ServiceAccountCredentials.from_json_keyfile_name('service-account.json', scope)
 client = gspread.authorize(creds)
 
-sheet_id = "19lBAT1N_Vuu-d1GAOGEfgZ1WAHFoHjglZRv3sIWiXKg" 
+sheet_id = "19lBAT1N_Vuu-d1GAOGEfgZ1WAHFoHjglZRv3sIWiXKg"
 
 @app.options("/write/")
 async def options_handler():
@@ -96,6 +96,61 @@ async def write(request: Request):
         logging.exception("Error occurred while writing data:")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+@app.post("/attendance/")
+async def mark_attendance(request: Request):
+    form = await request.json()
+
+    if not form:
+        raise HTTPException(status_code=400, detail="No data provided")
+    
+    branch = form.get('branch')
+    name = form.get('name')
+    designation = form.get('designation')
+    attendance_status = form.get('attendance', 'Present')
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    if not branch:
+        raise HTTPException(status_code=400, detail="Branch not provided")
+
+    try:
+        # Load or create the Attendance sheet
+        workbook = client.open_by_key(sheet_id)
+        try:
+            sheet = workbook.worksheet("Attendance")
+        except gspread.WorksheetNotFound:
+            sheet = workbook.add_worksheet(title="Attendance", rows="100", cols="50")
+            # Initialize the sheet with headers if new
+            headers = ["Name", "Branch", "Designation", "Date", "Attendance"]
+            sheet.append_row(headers)
+
+        # Find or add employee row
+        cell = sheet.find(name, in_column=1)
+        if not cell:
+            # New employee
+            sheet.append_row([name, branch, designation, date, attendance_status])
+        else:
+            index = cell.row
+            row_values = sheet.row_values(index)
+            first_empty_col = len(row_values) + 1  # get index of the first empty cell in the row
+
+            # Check if headers exist in the first empty cell column and add them if they don't
+            headers_row = sheet.row_values(1)  # Assuming headers are always in the first row
+            required_headers = ["Date", "Attendance"]
+
+            if not all(header in headers_row[first_empty_col-1:first_empty_col+1] for header in required_headers):
+                header_update_range = f"{chr(64 + first_empty_col)}1:{chr(64 + first_empty_col + 1)}1"
+                sheet.update(header_update_range, [required_headers])
+
+            # Append data in the first empty cell in the row for the same employee
+            update_range = f"{chr(64 + first_empty_col)}{index}:{chr(64 + first_empty_col + 1)}{index}"
+            sheet.update(update_range, [[date, attendance_status]])
+
+        return JSONResponse(content={"message": "Attendance marked successfully"})
+    except Exception as e:
+        logging.exception("Error occurred while marking attendance:")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
+

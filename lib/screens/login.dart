@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:km_tracker/screens/attendence_page.dart';
 import 'package:km_tracker/screens/form_page.dart';
 import 'package:km_tracker/screens/edit_page.dart';
 import 'package:km_tracker/widgets/loading_screen.dart';
@@ -29,7 +30,8 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         if (googleUser != null) {
-          final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+          final GoogleSignInAuthentication googleAuth =
+              await googleUser.authentication;
           final AuthCredential credential = GoogleAuthProvider.credential(
             accessToken: googleAuth.accessToken,
             idToken: googleAuth.idToken,
@@ -83,6 +85,13 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const FormPage()),
+    );
+  }
+
+  void _goToAttendancePage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AttendancePage()),
     );
   }
 
@@ -144,7 +153,8 @@ class _LoginPageState extends State<LoginPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.green,
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 30, vertical: 15),
                             textStyle: const TextStyle(fontSize: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -161,7 +171,26 @@ class _LoginPageState extends State<LoginPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.green,
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 30, vertical: 15),
+                            textStyle: const TextStyle(fontSize: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            shadowColor: Colors.black,
+                            elevation: 10,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton.icon(
+                          onPressed: () => _goToAttendancePage(context),
+                          icon: Icon(Icons.check_circle),
+                          label: const Text('Mark Attendance'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 30, vertical: 15),
                             textStyle: const TextStyle(fontSize: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
